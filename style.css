@@ -1,0 +1,18 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: black;
+  font-family: monospace;
+  color: #00ffcc;
+}
+
+#terminal {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 400px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #00ffcc;
+  border-radius: 10px;
+}
