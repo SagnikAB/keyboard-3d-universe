@@ -1,120 +1,193 @@
+// ==============================
+// KEYBOARD SHORTCUT UNIVERSE
+// ULTIMATE EDITION
+// ==============================
+
+// ---------- Scene ----------
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
+scene.fog = new THREE.Fog(0x000000, 20, 60);
 
+// ---------- Camera ----------
 const camera = new THREE.PerspectiveCamera(
-  75,
+  60,
   window.innerWidth / window.innerHeight,
   0.1,
   1000,
 );
+camera.position.set(0, 6, 14);
 
+// ---------- Renderer ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-// Lighting
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
+// ---------- Controls ----------
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enablePan = false;
+controls.minDistance = 8;
+controls.maxDistance = 25;
 
-const light = new THREE.PointLight(0x00ffff, 2);
-light.position.set(5, 10, 5);
-scene.add(light);
+// ---------- Lights ----------
+scene.add(new THREE.AmbientLight(0xffffff, 0.3));
 
-// Shortcut Database
-const shortcutDB = {
+const keyLight = new THREE.DirectionalLight(0x00ffff, 1.5);
+keyLight.position.set(5, 10, 6);
+keyLight.castShadow = true;
+scene.add(keyLight);
+
+const pulseLight = new THREE.PointLight(0x00ffff, 2, 40);
+pulseLight.position.set(0, 6, 5);
+scene.add(pulseLight);
+
+// ---------- Ground ----------
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(100, 100),
+  new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 1 }),
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- Shortcut DB ----------
+const shortcuts = {
+  Q: ["Ctrl + Q → Quit"],
+  W: ["Ctrl + W → Close Tab"],
+  E: ["Ctrl + E → Search"],
+  R: ["Ctrl + R → Refresh"],
   A: ["Ctrl + A → Select All"],
+  S: ["Ctrl + S → Save"],
+  D: ["Ctrl + D → Bookmark"],
+  F: ["Ctrl + F → Find"],
+  Z: ["Ctrl + Z → Undo"],
+  X: ["Ctrl + X → Cut"],
   C: ["Ctrl + C → Copy"],
   V: ["Ctrl + V → Paste"],
-  Z: ["Ctrl + Z → Undo"],
-  S: ["Ctrl + S → Save"],
-  F: ["Ctrl + F → Find"],
-  K: ["EASTER EGG FOUND 👀"],
+  K: ["👀 Cyber Mode Activated"],
 };
 
-// Create Key Function
-function createKey(letter, x, y) {
+// ---------- Font ----------
+let font;
+new THREE.FontLoader().load(
+  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+  (f) => {
+    font = f;
+    createKeyboard();
+  },
+);
+
+// ---------- Keyboard ----------
+const keys = [];
+const layout = [
+  "Q",
+  "W",
+  "E",
+  "R",
+  "A",
+  "S",
+  "D",
+  "F",
+  "Z",
+  "X",
+  "C",
+  "V",
+  "K",
+];
+
+function createKeyboard() {
+  layout.forEach((letter, i) => {
+    const key = createKey(letter, i * 1.6 - 9);
+    keys.push(key);
+  });
+}
+
+function createKey(letter, x) {
   const group = new THREE.Group();
 
-  const baseGeometry = new THREE.BoxGeometry(1, 0.3, 1);
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x111111,
-    roughness: 0.4,
-    metalness: 0.8,
-    emissive: 0x00ffff,
-    emissiveIntensity: 0.1,
-  });
+  const keyMesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 0.5, 1.4, 4, 4, 4),
+    new THREE.MeshStandardMaterial({
+      color: 0x1a1a1a,
+      metalness: 0.7,
+      roughness: 0.3,
+      emissive: 0x00ffff,
+      emissiveIntensity: 0.15,
+    }),
+  );
 
-  const key = new THREE.Mesh(baseGeometry, material);
-  group.add(key);
+  keyMesh.castShadow = true;
+  keyMesh.receiveShadow = true;
+  group.add(keyMesh);
 
-  group.position.set(x, y, 0);
-  group.userData = { letter: letter, mesh: key };
+  // 3D Text
+  const text = new THREE.Mesh(
+    new THREE.TextGeometry(letter, {
+      font,
+      size: 0.5,
+      height: 0.1,
+    }),
+    new THREE.MeshStandardMaterial({ color: 0x00ffcc }),
+  );
+  text.position.set(-0.2, 0.35, 0.6);
+  group.add(text);
+
+  group.position.set(x, 0, 0);
+  group.userData.letter = letter;
+  group.userData.keyMesh = keyMesh;
 
   scene.add(group);
   return group;
 }
 
-// Layout
-const keys = [];
-const letters = ["A", "C", "V", "Z", "S", "F", "K"];
-
-letters.forEach((letter, i) => {
-  const key = createKey(letter, i * 1.5 - 4, 0);
-  keys.push(key);
-});
-
-camera.position.z = 8;
-
-// Raycaster
+// ---------- Interaction ----------
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let hovered = null;
 
-window.addEventListener("click", (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+window.addEventListener("mousemove", (e) => {
+  mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
 
+window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children, true);
+  const hits = raycaster.intersectObjects(keys, true);
 
-  if (intersects.length > 0) {
-    const parent = intersects[0].object.parent;
-    if (parent.userData.letter) {
-      pressKey(parent);
-    }
+  if (hits.length) {
+    const key = hits[0].object.parent;
+    pressKey(key);
   }
 });
 
-function pressKey(keyGroup) {
-  const letter = keyGroup.userData.letter;
+function pressKey(key) {
+  const mesh = key.userData.keyMesh;
+  const letter = key.userData.letter;
 
-  // Press animation
-  keyGroup.position.z = -0.2;
-  setTimeout(() => {
-    keyGroup.position.z = 0;
-  }, 150);
+  gsap.to(mesh.position, {
+    y: -0.25,
+    duration: 0.1,
+    yoyo: true,
+    repeat: 1,
+  });
 
-  // Glow boost
-  keyGroup.userData.mesh.material.emissiveIntensity = 1;
-  setTimeout(() => {
-    keyGroup.userData.mesh.material.emissiveIntensity = 0.1;
-  }, 200);
-
-  // Show Output
-  const output = document.getElementById("output");
-  output.innerHTML =
+  document.getElementById("output").innerHTML =
     `<strong>${letter}</strong><br>` +
-    (shortcutDB[letter]
-      ? shortcutDB[letter].join("<br>")
-      : "No shortcut found");
+    (shortcuts[letter] || ["No shortcut"]).join("<br>");
 
-  // Easter Egg Trigger
-  if (letter === "K") {
-    document.body.style.background = "linear-gradient(45deg, purple, black)";
-    output.innerHTML += "<br>💜 Cyber Mode Activated";
-  }
+  if (letter === "K") cyberMode();
 }
 
-// Konami Code Easter Egg
+// ---------- Easter Eggs ----------
+function cyberMode() {
+  document.body.style.background = "linear-gradient(45deg, purple, black)";
+  keys.forEach((k) => k.userData.keyMesh.material.color.set(0xff00ff));
+}
+
+// Konami Code
 let konami = [];
 const secret = [
   "ArrowUp",
@@ -132,30 +205,32 @@ const secret = [
 window.addEventListener("keydown", (e) => {
   konami.push(e.key);
   if (konami.length > secret.length) konami.shift();
-
   if (JSON.stringify(konami) === JSON.stringify(secret)) {
-    activateGodMode();
+    document.getElementById("output").innerHTML = "🚀 GOD MODE ACTIVATED";
+    keys.forEach((k) => k.userData.keyMesh.material.color.set(0xff0000));
   }
 });
 
-function activateGodMode() {
-  document.getElementById("output").innerHTML =
-    "🚀 GOD MODE ACTIVATED<br>All shortcuts unlocked.";
-
-  keys.forEach((key) => {
-    key.userData.mesh.material.color.set(0xff0000);
-  });
-}
-
-// Animation
+// ---------- Animate ----------
 function animate() {
   requestAnimationFrame(animate);
 
-  keys.forEach((key) => {
-    key.rotation.y += 0.005;
+  keys.forEach((k, i) => {
+    k.rotation.y += 0.005;
+    k.position.y = Math.sin(Date.now() * 0.002 + i) * 0.08;
   });
 
+  pulseLight.intensity = 1.5 + Math.sin(Date.now() * 0.003) * 0.5;
+
+  controls.update();
   renderer.render(scene, camera);
 }
 
 animate();
+
+// ---------- Resize ----------
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
