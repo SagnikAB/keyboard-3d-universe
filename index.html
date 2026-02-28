@@ -64,6 +64,15 @@
         font-size: 12px;
         opacity: 0.5;
       }
+
+      .key-label {
+        position: absolute;
+        color: white;
+        font-weight: bold;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: 5;
+      }
     </style>
   </head>
   <body>
@@ -80,13 +89,7 @@
       </div>
     </div>
 
-    <!-- THREE CORE -->
     <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
-
-    <!-- IMPORTANT: use non-module example files -->
-    <script src="https://unpkg.com/three@0.155.0/examples/js/loaders/FontLoader.js"></script>
-    <script src="https://unpkg.com/three@0.155.0/examples/js/geometries/TextGeometry.js"></script>
-
     <script src="script.js"></script>
   </body>
 </html>

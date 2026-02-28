@@ -1,6 +1,7 @@
 // ======================================
-// Keyboard Shortcut Universe
-// Stable CDN Version (No Modules)
+// Keyboard Shortcut Universe (Stable)
+// No FontLoader. No TextGeometry.
+// Clean UX. Production safe.
 // ======================================
 
 const shortcuts = {
@@ -35,7 +36,6 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.3));
 
 const light = new THREE.DirectionalLight(0x00ffff, 1.2);
 light.position.set(5, 8, 5);
-light.castShadow = true;
 scene.add(light);
 
 const raycaster = new THREE.Raycaster();
@@ -50,55 +50,51 @@ function showShortcut(letter) {
   document.getElementById("desc").innerText = data.desc;
 }
 
-// LOAD FONT PROPERLY
-const loader = new THREE.FontLoader();
+function createKey(letter, x) {
+  const geo = new THREE.BoxGeometry(1.6, 0.6, 1.6);
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    emissive: 0x00ffff,
+    emissiveIntensity: 0.5,
+    metalness: 0.6,
+    roughness: 0.3,
+  });
 
-loader.load(
-  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
-  function (font) {
-    function createKey(letter, x) {
-      const geo = new THREE.BoxGeometry(1.6, 0.6, 1.6);
-      const mat = new THREE.MeshStandardMaterial({
-        color: 0x111111,
-        emissive: 0x00ffff,
-        emissiveIntensity: 0.5,
-        metalness: 0.6,
-        roughness: 0.3,
-      });
+  const key = new THREE.Mesh(geo, mat);
+  key.position.set(x, 0, 0);
+  key.userData.letter = letter;
 
-      const key = new THREE.Mesh(geo, mat);
-      key.position.set(x, 0, 0);
-      key.castShadow = true;
-      key.userData.letter = letter;
+  scene.add(key);
+  keys.push(key);
 
-      scene.add(key);
-      keys.push(key);
+  // HTML label instead of 3D text
+  const label = document.createElement("div");
+  label.className = "key-label";
+  label.innerText = letter;
+  document.body.appendChild(label);
 
-      // TEXT
-      const textGeo = new THREE.TextGeometry(letter, {
-        font: font,
-        size: 0.5,
-        height: 0.05,
-      });
+  key.userData.label = label;
+}
 
-      textGeo.computeBoundingBox();
-      const textMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const text = new THREE.Mesh(textGeo, textMat);
+Object.keys(shortcuts).forEach((letter, i) => {
+  createKey(letter, i * 2 - 8);
+});
 
-      const centerOffset =
-        -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+// Update label positions
+function updateLabels() {
+  keys.forEach((key) => {
+    const vector = key.position.clone();
+    vector.project(camera);
 
-      text.position.set(x + centerOffset, 0.35, 0.6);
-      scene.add(text);
-    }
+    const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
 
-    Object.keys(shortcuts).forEach((letter, i) => {
-      createKey(letter, i * 2 - 8);
-    });
-  },
-);
+    key.userData.label.style.left = `${x}px`;
+    key.userData.label.style.top = `${y - 20}px`;
+  });
+}
 
-// HOVER
+// Hover
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -115,7 +111,7 @@ window.addEventListener("mousemove", (event) => {
   }
 });
 
-// CLICK ANIMATION
+// Click animation
 window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects(keys);
@@ -123,14 +119,11 @@ window.addEventListener("click", () => {
   if (hits.length > 0) {
     const key = hits[0].object;
     key.position.y = -0.2;
-
-    setTimeout(() => {
-      key.position.y = 0;
-    }, 120);
+    setTimeout(() => (key.position.y = 0), 120);
   }
 });
 
-// REAL KEYBOARD SUPPORT
+// Keyboard support
 window.addEventListener("keydown", (e) => {
   const letter = e.key.toUpperCase();
   if (shortcuts[letter]) {
@@ -138,7 +131,7 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// RESIZE
+// Resize
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -147,6 +140,7 @@ window.addEventListener("resize", () => {
 
 function animate() {
   requestAnimationFrame(animate);
+  updateLabels();
   renderer.render(scene, camera);
 }
 
