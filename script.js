@@ -1,10 +1,10 @@
 // ===========================================
-// GOD-TIER CYBER KEYBOARD (NO MODULES)
+// ULTIMATE CYBER KEYBOARD (Vercel Safe)
 // ===========================================
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020202);
-scene.fog = new THREE.Fog(0x000000, 12, 40);
+scene.background = new THREE.Color(0x000000);
+scene.fog = new THREE.FogExp2(0x000000, 0.08);
 
 const camera = new THREE.PerspectiveCamera(
   60,
@@ -12,43 +12,41 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000,
 );
-camera.position.set(0, 5, 14);
+camera.position.set(0, 5, 15);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.physicallyCorrectLights = true;
 document.body.appendChild(renderer.domElement);
 
 // ---------- LIGHTING ----------
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+scene.add(new THREE.AmbientLight(0xffffff, 0.1));
 
 const rim = new THREE.DirectionalLight(0x00ffff, 2);
 rim.position.set(-5, 8, -5);
 rim.castShadow = true;
 scene.add(rim);
 
-const fill = new THREE.DirectionalLight(0x0088ff, 1);
+const fill = new THREE.DirectionalLight(0x0088ff, 1.2);
 fill.position.set(5, 6, 8);
 scene.add(fill);
 
-const pulse = new THREE.PointLight(0x00ffff, 3, 60);
+const pulse = new THREE.PointLight(0x00ffff, 4, 60);
 pulse.position.set(0, 6, 4);
 scene.add(pulse);
 
-// ---------- NEON GRID FLOOR ----------
+// ---------- FLOOR ----------
 
-const grid = new THREE.GridHelper(60, 60, 0x00ffff, 0x003333);
+const grid = new THREE.GridHelper(80, 80, 0x00ffff, 0x003333);
 grid.position.y = -0.99;
 scene.add(grid);
 
 const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 60),
+  new THREE.PlaneGeometry(80, 80),
   new THREE.MeshStandardMaterial({
     color: 0x050505,
     roughness: 1,
-    metalness: 0,
   }),
 );
 ground.rotation.x = -Math.PI / 2;
@@ -59,18 +57,18 @@ scene.add(ground);
 // ---------- KEYS ----------
 
 const keys = [];
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
 function createKey(x) {
   const geo = new THREE.BoxGeometry(1.4, 0.7, 1.4);
 
-  const mat = new THREE.MeshPhysicalMaterial({
+  const mat = new THREE.MeshStandardMaterial({
     color: 0x111111,
-    metalness: 0.5,
+    metalness: 0.7,
     roughness: 0.15,
-    clearcoat: 1,
-    clearcoatRoughness: 0.05,
     emissive: 0x00ffff,
-    emissiveIntensity: 0.6,
+    emissiveIntensity: 0.8,
   });
 
   const key = new THREE.Mesh(geo, mat);
@@ -83,18 +81,26 @@ function createKey(x) {
 }
 
 for (let i = 0; i < 9; i++) {
-  createKey(i * 1.7 - 7);
+  createKey(i * 1.8 - 7);
 }
 
-// ---------- INTERACTION ----------
-
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+// ---------- HOVER GLOW ----------
 
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(keys);
+
+  keys.forEach((k) => (k.material.emissiveIntensity = 0.8));
+
+  if (intersects.length > 0) {
+    intersects[0].object.material.emissiveIntensity = 2.5;
+  }
 });
+
+// ---------- CLICK ----------
 
 window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
@@ -103,16 +109,15 @@ window.addEventListener("click", () => {
   if (hits.length > 0) {
     const key = hits[0].object;
 
-    key.position.y = -0.35;
-    key.material.emissiveIntensity = 3;
+    key.position.y = -0.4;
+    key.material.emissiveIntensity = 4;
 
     setTimeout(() => {
       key.position.y = 0;
-      key.material.emissiveIntensity = 0.6;
     }, 150);
 
     document.getElementById("output").innerHTML =
-      "<strong>Activated</strong><br>God-tier shortcut triggered";
+      "<strong>ULTIMATE MODE</strong><br>Neon shortcut executed";
   }
 });
 
@@ -134,11 +139,15 @@ function animate() {
     k.position.y += Math.sin(Date.now() * 0.002 + i) * 0.004;
   });
 
-  pulse.intensity = 2 + Math.sin(Date.now() * 0.003) * 1.2;
+  // Light pulse
+  pulse.intensity = 3 + Math.sin(Date.now() * 0.003) * 2;
 
-  // subtle camera sway
-  camera.position.x = Math.sin(Date.now() * 0.0005) * 0.5;
+  // Subtle camera drift
+  camera.position.x = Math.sin(Date.now() * 0.0004) * 0.7;
   camera.lookAt(0, 0, 0);
+
+  // Grid pulse
+  grid.material.color.setHSL(0.5, 1, 0.4 + Math.sin(Date.now() * 0.002) * 0.1);
 
   renderer.render(scene, camera);
 }
