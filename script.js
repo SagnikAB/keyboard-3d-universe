@@ -1,11 +1,10 @@
-// =======================================
-// INSANE PORTFOLIO MODE — CYBER KEYBOARD
-// =======================================
+// ===========================================
+// GOD-TIER CYBER KEYBOARD (NO MODULES)
+// ===========================================
 
-// ---------- Scene ----------
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.Fog(0x000000, 15, 40);
+scene.background = new THREE.Color(0x020202);
+scene.fog = new THREE.Fog(0x000000, 12, 40);
 
 const camera = new THREE.PerspectiveCamera(
   60,
@@ -13,38 +12,37 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000,
 );
-
-// Cinematic angle
 camera.position.set(0, 5, 14);
-camera.lookAt(0, 0, 0);
 
-// ---------- Renderer ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.physicallyCorrectLights = true;
 document.body.appendChild(renderer.domElement);
 
-// ---------- Lighting ----------
-scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+// ---------- LIGHTING ----------
 
-// Neon rim light
-const rimLight = new THREE.DirectionalLight(0x00ffff, 1.5);
-rimLight.position.set(-5, 8, -5);
-rimLight.castShadow = true;
-scene.add(rimLight);
+scene.add(new THREE.AmbientLight(0xffffff, 0.15));
 
-// Front light
-const frontLight = new THREE.DirectionalLight(0x00ffff, 0.8);
-frontLight.position.set(5, 5, 10);
-scene.add(frontLight);
+const rim = new THREE.DirectionalLight(0x00ffff, 2);
+rim.position.set(-5, 8, -5);
+rim.castShadow = true;
+scene.add(rim);
 
-// Pulsing glow light
-const pulseLight = new THREE.PointLight(0x00ffff, 2, 50);
-pulseLight.position.set(0, 6, 5);
-scene.add(pulseLight);
+const fill = new THREE.DirectionalLight(0x0088ff, 1);
+fill.position.set(5, 6, 8);
+scene.add(fill);
 
-// ---------- Ground ----------
+const pulse = new THREE.PointLight(0x00ffff, 3, 60);
+pulse.position.set(0, 6, 4);
+scene.add(pulse);
+
+// ---------- NEON GRID FLOOR ----------
+
+const grid = new THREE.GridHelper(60, 60, 0x00ffff, 0x003333);
+grid.position.y = -0.99;
+scene.add(grid);
+
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(60, 60),
   new THREE.MeshStandardMaterial({
@@ -58,25 +56,24 @@ ground.position.y = -1;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ---------- Keys ----------
+// ---------- KEYS ----------
+
 const keys = [];
 
 function createKey(x) {
-  const geometry = new THREE.BoxGeometry(1.3, 0.6, 1.3);
+  const geo = new THREE.BoxGeometry(1.4, 0.7, 1.4);
 
-  const material = new THREE.MeshPhysicalMaterial({
+  const mat = new THREE.MeshPhysicalMaterial({
     color: 0x111111,
-    metalness: 0.4,
-    roughness: 0.2,
+    metalness: 0.5,
+    roughness: 0.15,
     clearcoat: 1,
-    clearcoatRoughness: 0.1,
-    transmission: 0.2, // glass effect
-    thickness: 1.2,
+    clearcoatRoughness: 0.05,
     emissive: 0x00ffff,
-    emissiveIntensity: 0.4,
+    emissiveIntensity: 0.6,
   });
 
-  const key = new THREE.Mesh(geometry, material);
+  const key = new THREE.Mesh(geo, mat);
   key.position.set(x, 0, 0);
   key.castShadow = true;
   key.receiveShadow = true;
@@ -89,7 +86,8 @@ for (let i = 0; i < 9; i++) {
   createKey(i * 1.7 - 7);
 }
 
-// ---------- Interaction ----------
+// ---------- INTERACTION ----------
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -100,43 +98,47 @@ window.addEventListener("mousemove", (event) => {
 
 window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(keys);
+  const hits = raycaster.intersectObjects(keys);
 
-  if (intersects.length > 0) {
-    const key = intersects[0].object;
+  if (hits.length > 0) {
+    const key = hits[0].object;
 
-    // Press animation
-    key.position.y = -0.3;
-    key.material.emissiveIntensity = 2;
+    key.position.y = -0.35;
+    key.material.emissiveIntensity = 3;
 
     setTimeout(() => {
       key.position.y = 0;
-      key.material.emissiveIntensity = 0.4;
+      key.material.emissiveIntensity = 0.6;
     }, 150);
 
     document.getElementById("output").innerHTML =
-      "<strong>Activated</strong><br>Cyber shortcut triggered";
+      "<strong>Activated</strong><br>God-tier shortcut triggered";
   }
 });
 
-// ---------- Resize ----------
+// ---------- RESIZE ----------
+
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ---------- Animation ----------
+// ---------- ANIMATION ----------
+
 function animate() {
   requestAnimationFrame(animate);
 
   keys.forEach((k, i) => {
     k.rotation.y += 0.01;
-    k.position.y += Math.sin(Date.now() * 0.002 + i) * 0.003;
+    k.position.y += Math.sin(Date.now() * 0.002 + i) * 0.004;
   });
 
-  // Pulse light animation
-  pulseLight.intensity = 1.5 + Math.sin(Date.now() * 0.003) * 0.8;
+  pulse.intensity = 2 + Math.sin(Date.now() * 0.003) * 1.2;
+
+  // subtle camera sway
+  camera.position.x = Math.sin(Date.now() * 0.0005) * 0.5;
+  camera.lookAt(0, 0, 0);
 
   renderer.render(scene, camera);
 }
