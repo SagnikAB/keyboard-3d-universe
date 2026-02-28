@@ -2,20 +2,88 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Keyboard Universe</title>
-    <link rel="stylesheet" href="style.css" />
-    <link
-      rel="icon"
-      href="https://cdn-icons-png.flaticon.com/512/709/709496.png"
-    />
+    <title>Keyboard Shortcut Universe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Inter, Arial, sans-serif;
+        background: #050505;
+        color: white;
+      }
+
+      #hero {
+        position: absolute;
+        top: 30px;
+        width: 100%;
+        text-align: center;
+        z-index: 10;
+      }
+
+      #hero h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 600;
+      }
+
+      #hero p {
+        margin: 6px 0 0 0;
+        font-size: 14px;
+        opacity: 0.7;
+      }
+
+      #panel {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 420px;
+        background: rgba(0, 0, 0, 0.85);
+        border: 1px solid #00ffff;
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        z-index: 10;
+      }
+
+      #combo {
+        font-size: 20px;
+        color: #00ffff;
+        font-weight: bold;
+      }
+
+      #desc {
+        margin-top: 8px;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      #hint {
+        margin-top: 12px;
+        font-size: 12px;
+        opacity: 0.5;
+      }
+    </style>
   </head>
   <body>
-    <div id="terminal">
-      <h2>⌨ Shortcut Terminal</h2>
-      <div id="output">Click a key…</div>
+    <div id="hero">
+      <h1>Keyboard Shortcut Universe</h1>
+      <p>Explore essential shortcuts in an interactive 3D experience</p>
+    </div>
+
+    <div id="panel">
+      <div id="combo">Click a key</div>
+      <div id="desc">Hover or click a key to see its shortcut.</div>
+      <div id="hint">
+        Tip: You can also press the real key on your keyboard.
+      </div>
     </div>
 
     <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.155.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://unpkg.com/three@0.155.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

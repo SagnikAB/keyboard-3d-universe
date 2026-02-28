@@ -1,92 +1,95 @@
-// ===========================================
-// CYBER KEYBOARD — FINAL FORM
-// ===========================================
+// ==============================
+// Keyboard Shortcut Universe
+// UX Optimized Version
+// ==============================
+
+const shortcuts = {
+  Q: { combo: "Ctrl + Q", desc: "Close application" },
+  W: { combo: "Ctrl + W", desc: "Close current tab" },
+  E: { combo: "Ctrl + E", desc: "Search in application" },
+  R: { combo: "Ctrl + R", desc: "Reload page" },
+  T: { combo: "Ctrl + T", desc: "Open new tab" },
+  Y: { combo: "Ctrl + Y", desc: "Redo last action" },
+  U: { combo: "Ctrl + U", desc: "View page source" },
+  I: { combo: "Ctrl + I", desc: "Italic text / DevTools" },
+  O: { combo: "Ctrl + O", desc: "Open file" },
+};
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x001111, 0.06);
+scene.background = new THREE.Color(0x050505);
 
 const camera = new THREE.PerspectiveCamera(
-  55,
+  60,
   window.innerWidth / window.innerHeight,
   0.1,
   1000,
 );
-camera.position.set(0, 6, 18);
+camera.position.set(0, 4, 14);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.4;
 document.body.appendChild(renderer.domElement);
 
-// ---------- LIGHTING ----------
+scene.add(new THREE.AmbientLight(0xffffff, 0.3));
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.08));
-
-const rim = new THREE.DirectionalLight(0x00ffff, 3);
-rim.position.set(-6, 10, -5);
-rim.castShadow = true;
-scene.add(rim);
-
-const fill = new THREE.DirectionalLight(0x0044ff, 1.5);
-fill.position.set(5, 5, 8);
-scene.add(fill);
-
-const pulse = new THREE.PointLight(0x00ffff, 6, 80);
-pulse.position.set(0, 8, 4);
-scene.add(pulse);
-
-// ---------- FLOOR ----------
-
-const grid = new THREE.GridHelper(100, 100, 0x00ffff, 0x002222);
-grid.position.y = -1;
-scene.add(grid);
-
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(100, 100),
-  new THREE.MeshStandardMaterial({
-    color: 0x020202,
-    roughness: 1,
-  }),
-);
-ground.rotation.x = -Math.PI / 2;
-ground.position.y = -1.01;
-ground.receiveShadow = true;
-scene.add(ground);
-
-// ---------- KEYS ----------
+const light = new THREE.DirectionalLight(0x00ffff, 1.5);
+light.position.set(5, 8, 5);
+light.castShadow = true;
+scene.add(light);
 
 const keys = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-function createKey(x) {
-  const geo = new THREE.BoxGeometry(1.6, 0.8, 1.6);
+const loader = new THREE.FontLoader();
+loader.load(
+  "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+  (font) => {
+    function createKey(letter, x) {
+      const geo = new THREE.BoxGeometry(1.6, 0.6, 1.6);
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x111111,
+        emissive: 0x00ffff,
+        emissiveIntensity: 0.5,
+        metalness: 0.6,
+        roughness: 0.3,
+      });
 
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0x111111,
-    metalness: 0.8,
-    roughness: 0.1,
-    emissive: 0x00ffff,
-    emissiveIntensity: 1.2,
-  });
+      const key = new THREE.Mesh(geo, mat);
+      key.position.set(x, 0, 0);
+      key.castShadow = true;
+      key.userData.letter = letter;
 
-  const key = new THREE.Mesh(geo, mat);
-  key.position.set(x, 0, 0);
-  key.castShadow = true;
-  key.receiveShadow = true;
+      scene.add(key);
+      keys.push(key);
 
-  scene.add(key);
-  keys.push(key);
+      const textGeo = new THREE.TextGeometry(letter, {
+        font: font,
+        size: 0.5,
+        height: 0.1,
+      });
+
+      const textMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const text = new THREE.Mesh(textGeo, textMat);
+
+      text.position.set(x - 0.25, 0.35, 0.6);
+      scene.add(text);
+    }
+
+    Object.keys(shortcuts).forEach((letter, i) => {
+      createKey(letter, i * 2 - 8);
+    });
+  },
+);
+
+function showShortcut(letter) {
+  const data = shortcuts[letter];
+  if (!data) return;
+
+  document.getElementById("combo").innerText = data.combo;
+  document.getElementById("desc").innerText = data.desc;
 }
-
-for (let i = 0; i < 9; i++) {
-  createKey(i * 2 - 8);
-}
-
-// ---------- INTERACTION ----------
 
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -95,10 +98,11 @@ window.addEventListener("mousemove", (event) => {
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(keys);
 
-  keys.forEach((k) => (k.material.emissiveIntensity = 1.2));
+  keys.forEach((k) => (k.material.emissiveIntensity = 0.5));
 
   if (intersects.length > 0) {
-    intersects[0].object.material.emissiveIntensity = 3.5;
+    intersects[0].object.material.emissiveIntensity = 2;
+    showShortcut(intersects[0].object.userData.letter);
   }
 });
 
@@ -108,20 +112,18 @@ window.addEventListener("click", () => {
 
   if (hits.length > 0) {
     const key = hits[0].object;
+    key.position.y = -0.2;
 
-    key.position.y = -0.5;
-    key.material.emissiveIntensity = 6;
-
-    setTimeout(() => {
-      key.position.y = 0;
-    }, 150);
-
-    document.getElementById("output").innerHTML =
-      "<strong>REALITY BREACHED</strong><br>Hyper Neon Shortcut Activated";
+    setTimeout(() => (key.position.y = 0), 120);
   }
 });
 
-// ---------- RESIZE ----------
+window.addEventListener("keydown", (e) => {
+  const letter = e.key.toUpperCase();
+  if (shortcuts[letter]) {
+    showShortcut(letter);
+  }
+});
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -129,24 +131,8 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ---------- ANIMATION ----------
-
 function animate() {
   requestAnimationFrame(animate);
-
-  const time = Date.now();
-
-  keys.forEach((k, i) => {
-    k.rotation.y += 0.01;
-    k.position.y += Math.sin(time * 0.002 + i) * 0.004;
-  });
-
-  pulse.intensity = 4 + Math.sin(time * 0.003) * 3;
-
-  camera.position.x = Math.sin(time * 0.0003) * 1.2;
-  camera.position.y = 6 + Math.sin(time * 0.0005) * 0.5;
-  camera.lookAt(0, 0, 0);
-
   renderer.render(scene, camera);
 }
 
