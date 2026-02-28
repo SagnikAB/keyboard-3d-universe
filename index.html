@@ -9,8 +9,8 @@
       body {
         margin: 0;
         overflow: hidden;
-        font-family: Inter, Arial, sans-serif;
         background: #050505;
+        font-family: Arial, sans-serif;
         color: white;
       }
 
@@ -24,12 +24,11 @@
 
       #hero h1 {
         margin: 0;
-        font-size: 32px;
-        font-weight: 600;
+        font-size: 30px;
       }
 
       #hero p {
-        margin: 6px 0 0 0;
+        margin-top: 6px;
         font-size: 14px;
         opacity: 0.7;
       }
@@ -42,9 +41,9 @@
         width: 420px;
         background: rgba(0, 0, 0, 0.85);
         border: 1px solid #00ffff;
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 20px;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(8px);
         z-index: 10;
       }
 
@@ -57,7 +56,7 @@
       #desc {
         margin-top: 8px;
         font-size: 14px;
-        opacity: 0.8;
+        opacity: 0.85;
       }
 
       #hint {
@@ -81,9 +80,13 @@
       </div>
     </div>
 
+    <!-- THREE CORE -->
     <script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+
+    <!-- IMPORTANT: use non-module example files -->
     <script src="https://unpkg.com/three@0.155.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://unpkg.com/three@0.155.0/examples/js/geometries/TextGeometry.js"></script>
+
     <script src="script.js"></script>
   </body>
 </html>

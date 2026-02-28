@@ -1,17 +1,17 @@
-// ==============================
+// ======================================
 // Keyboard Shortcut Universe
-// UX Optimized Version
-// ==============================
+// Stable CDN Version (No Modules)
+// ======================================
 
 const shortcuts = {
   Q: { combo: "Ctrl + Q", desc: "Close application" },
   W: { combo: "Ctrl + W", desc: "Close current tab" },
-  E: { combo: "Ctrl + E", desc: "Search in application" },
+  E: { combo: "Ctrl + E", desc: "Search inside app or browser" },
   R: { combo: "Ctrl + R", desc: "Reload page" },
   T: { combo: "Ctrl + T", desc: "Open new tab" },
   Y: { combo: "Ctrl + Y", desc: "Redo last action" },
   U: { combo: "Ctrl + U", desc: "View page source" },
-  I: { combo: "Ctrl + I", desc: "Italic text / DevTools" },
+  I: { combo: "Ctrl + I", desc: "Italic text or DevTools" },
   O: { combo: "Ctrl + O", desc: "Open file" },
 };
 
@@ -33,19 +33,29 @@ document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.3));
 
-const light = new THREE.DirectionalLight(0x00ffff, 1.5);
+const light = new THREE.DirectionalLight(0x00ffff, 1.2);
 light.position.set(5, 8, 5);
 light.castShadow = true;
 scene.add(light);
 
-const keys = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+const keys = [];
 
+function showShortcut(letter) {
+  const data = shortcuts[letter];
+  if (!data) return;
+
+  document.getElementById("combo").innerText = data.combo;
+  document.getElementById("desc").innerText = data.desc;
+}
+
+// LOAD FONT PROPERLY
 const loader = new THREE.FontLoader();
+
 loader.load(
   "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
-  (font) => {
+  function (font) {
     function createKey(letter, x) {
       const geo = new THREE.BoxGeometry(1.6, 0.6, 1.6);
       const mat = new THREE.MeshStandardMaterial({
@@ -64,16 +74,21 @@ loader.load(
       scene.add(key);
       keys.push(key);
 
+      // TEXT
       const textGeo = new THREE.TextGeometry(letter, {
         font: font,
         size: 0.5,
-        height: 0.1,
+        height: 0.05,
       });
 
+      textGeo.computeBoundingBox();
       const textMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const text = new THREE.Mesh(textGeo, textMat);
 
-      text.position.set(x - 0.25, 0.35, 0.6);
+      const centerOffset =
+        -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+
+      text.position.set(x + centerOffset, 0.35, 0.6);
       scene.add(text);
     }
 
@@ -83,14 +98,7 @@ loader.load(
   },
 );
 
-function showShortcut(letter) {
-  const data = shortcuts[letter];
-  if (!data) return;
-
-  document.getElementById("combo").innerText = data.combo;
-  document.getElementById("desc").innerText = data.desc;
-}
-
+// HOVER
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -101,11 +109,13 @@ window.addEventListener("mousemove", (event) => {
   keys.forEach((k) => (k.material.emissiveIntensity = 0.5));
 
   if (intersects.length > 0) {
-    intersects[0].object.material.emissiveIntensity = 2;
-    showShortcut(intersects[0].object.userData.letter);
+    const key = intersects[0].object;
+    key.material.emissiveIntensity = 2;
+    showShortcut(key.userData.letter);
   }
 });
 
+// CLICK ANIMATION
 window.addEventListener("click", () => {
   raycaster.setFromCamera(mouse, camera);
   const hits = raycaster.intersectObjects(keys);
@@ -114,10 +124,13 @@ window.addEventListener("click", () => {
     const key = hits[0].object;
     key.position.y = -0.2;
 
-    setTimeout(() => (key.position.y = 0), 120);
+    setTimeout(() => {
+      key.position.y = 0;
+    }, 120);
   }
 });
 
+// REAL KEYBOARD SUPPORT
 window.addEventListener("keydown", (e) => {
   const letter = e.key.toUpperCase();
   if (shortcuts[letter]) {
@@ -125,6 +138,7 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+// RESIZE
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
